@@ -21,6 +21,8 @@ RUN apt-get -yq install bsdmainutils
 RUN apt-get -yq install git software-properties-common python3
 RUN apt-add-repository -y ppa:webupd8team/java
 RUN apt-get -yq update
+RUN echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
+RUN echo debconf shared/accepted-oracle-license-v1-1 seen   true | debconf-set-selections
 RUN apt-get -yq install oracle-java8-installer
 
 RUN mkdir -p /usr/local/bin && \

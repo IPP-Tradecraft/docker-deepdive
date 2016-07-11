@@ -13,6 +13,7 @@ RUN echo "Acquire::http {No-cache=True;};" > /etc/apt/apt.conf.d/no-cache
 
 RUN apt-get update && apt-get install -yq \
 	supervisor \
+	screen \
 	python \
 	build-essential \
 	make \

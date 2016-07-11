@@ -75,13 +75,12 @@ E=([ -n "$(1)" ] && (							\
 	echo -ne "	\e[0;37m[\e[32m"; echo -ne $(1); 		\
 	if [ -n '$(2)' ] ; then $(if $(2),$(2),:) > /dev/null 2>&1; 	\
 		rv=$$?; if [ $$rv -eq 0 ]; then				\
-			echo -e "\e[0;37m:\e[1;34mSuccess\e[0m]";	\
+			echo -e "\e[0;37m:\e[1;34m Success\e[0m]";	\
 		else 							\
 			echo -e "\e[0;37m:\e[0;31m Failure\e[0m]";	\
 			exit $$rv;					\
 		fi;							\
 	else echo -e "\e[0;37m]"; fi) 1>&2)
-
 else
 Q=
 E=
@@ -117,7 +116,7 @@ build:
 
 PHONY+=run
 run: 
-	$(Q)$(call e); $(MAKE) build rm-instance run-instance; $(call e)
+	$(Q)$(call e); $(MAKE) build clean-instance run-instance; $(call e)
 
 stop:
 	$(Q)$(call e); $(MAKE) stop-instance; $(call e)
@@ -125,24 +124,27 @@ stop:
 start:
 	$(Q)$(call e); $(MAKE) start-instance; $(call e)
 
+clean:
+	$(Q)$(call e); $(MAKE) stop-instance clean-instance; $(call e)
+
 run-instance:
 	$(Q)test -z "$$($(DOCKER) ps -qa -f 'name=$(RUNAS)')" || \
 		( echo "Please remove the instance before issuing make run" 1>&2 && exit 127 )
 	$(Q)$(call E, DOCKER RUN $(RUNAS), \
-		$(DOCKER) run -tid --name $(RUNAS) $(IMAGE):$(TAG)) \
+		$(DOCKER) run -tid --name $(RUNAS) $(IMAGE):$(TAG) > instance-id) \
 	 && $(call E, $(RUNAS) is running)
 	@echo -e "\n\n	Use \e[1mdocker attach $(RUNAS)\e[0m to attach to the instance\n"
 
-rm-instance:
+clean-instance:
 	$(Q)test -z "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" || \
-		( echo "Please stop the instance before issuing make rm-instance" 1>&2 && exit 127 )
-	$(Q)$(call E, 'DOCKER RM', $(DOCKER) rm $(RUNAS))
+		( echo "Please stop the instance before issuing make clean-instance" 1>&2 && exit 127 )
+	$(Q)$(call E, 'DOCKER CLEAN', ($(DOCKER) rm $(RUNAS) || echo $(RUNAS)) > instance-id)
 
 start-instance:
 	$(Q)$(call E, 'DOCKER START', $(DOCKER) start $(RUNAS) > instance-id)
 
 stop-instance:
-	$(Q)$(call E, 'DOCKER STOP', $(DOCKER) stop $(RUNAS) > instance-id)
+	$(Q)test -n "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" && $(call E, 'DOCKER STOP', $(DOCKER) stop $(RUNAS)) || true
 
 attach:
 	@echo -ne "\n\tDon't attach using make.\n\tUse \e[1mdocker attach $(RUNAS)\e[0m instead to attach to the instance\n\n" && exit 127

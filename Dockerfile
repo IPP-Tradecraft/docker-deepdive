@@ -52,6 +52,9 @@ RUN sed -i -e '/^%sudo/s/ALL[ \t]*$/NOPASSWD: ALL/'  /etc/sudoers
 RUN useradd -c "Deep Diver,,," -m -s /bin/bash --groups sudo deepdiver && \
 	echo deepdiver:${DD_PASSWORD}  | chpasswd -c SHA512
 
+ADD run-postgresql.sh /usr/bin
+ADD supervisor-postgresql.conf /etc/supervisor/conf.d/
+
 USER deepdiver
 WORKDIR /home/deepdiver
 RUN echo PATH="/home/deepdiver/local/bin:$PATH" >> ~/.bashrc
@@ -61,8 +64,5 @@ RUN getdeepdive.sh deepdive_from_release
 RUN getdeepdive.sh deepdive_examples_tests
 RUN getdeepdive.sh spouse_example
 
-USER root
-ADD run-postgresql.sh /usr/bin
-ADD supervisor-postgresql.conf /etc/supervisor/conf.d/
 
 ENTRYPOINT [ "/usr/bin/supervisord" ]

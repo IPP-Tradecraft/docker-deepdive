@@ -11,7 +11,22 @@ ENV LC_ALL en_US.UTF-8
 RUN echo "force-unsafe-io" > /etc/dpkg/dpkg.cfg.d/02apt-speedup
 RUN echo "Acquire::http {No-cache=True;};" > /etc/apt/apt.conf.d/no-cache
 
-RUN apt-get update
+RUN apt-get update && apt-get install -yq \
+	supervisor \
+	python \
+	build-essential \
+	make \
+	gcc \
+	libtool \
+	python-dev \
+	python-setuptools \
+	python-numpy \
+	python-matplotlib \
+	pango-graphite \
+	gnuplot-x11 \
+	postgresql-contrib \
+	python-pip \
+	libnuma-dev
 
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
 RUN dpkg-reconfigure dash

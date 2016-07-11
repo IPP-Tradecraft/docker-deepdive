@@ -71,9 +71,9 @@ PERL=perl -w
 ifeq ($(V),)
 Q=@
 e=(echo $(1) 1>&2)
-E=([ -n "$(1)" ] && (							\
+S=([ -n "$(1)" ] && (							\
 	echo -ne "	\e[0;37m[\e[32m"; echo -ne $(1); 		\
-	if [ -n '$(2)' ] ; then $(if $(2),$(2),:) > /dev/null 2>&1; 	\
+	if [ -n '$(2)' ] ; then ($(if $(2),$(2),:)) > /dev/null 2>&1; 	\
 		rv=$$?; if [ $$rv -eq 0 ]; then				\
 			echo -e "\e[0;37m:\e[1;34m Success\e[0m]";	\
 		else 							\
@@ -81,12 +81,18 @@ E=([ -n "$(1)" ] && (							\
 			exit $$rv;					\
 		fi;							\
 	else echo -e "\e[0;37m]"; fi) 1>&2)
+T=(echo -e "      -=|\e[0;31m$(1)\e[0;37m |=-"; $(if $(2), echo 1>&2; $(2) | sed -e '$(if $(3),$(3),s/^/\t/)' 1>&2, :))
+
 else
 Q=
-E=
+S=$(if $(2),$(2),:)
 e=
+T=(echo $(1))
 endif
 
+export Q
+export E
+export e
 
 PHONY=
 
@@ -95,8 +101,11 @@ PHONY=
 
 PHONY += default 
 
+
 default::
-	$(Q)$(call e); $(MAKE) build; $(call e)
+	@$(if $(Q),$(call e),:)
+	$(Q)$(MAKE) build  
+	@$(if $(Q),$(call e),:)
 
 PHONY += help
 help::
@@ -111,8 +120,8 @@ PHONY+=space
 PHONY+= build
 
 build: 
-	$(Q)$(call E, DOCKER BUILD, $(DOCKER) build -t $(IMAGE):$(TAG) $(ROOTDIR) > build-log 2>&1)
-
+	$(Q)$(call S, DOCKER BUILD, $(DOCKER) build -t $(IMAGE):$(TAG) $(ROOTDIR) > build-log 2>&1) || \
+		$(call T, Error: docker build log, tac build-log | grep -m1 Step -B10 | tac)
 
 PHONY+=run
 run: 
@@ -130,21 +139,21 @@ clean:
 run-instance:
 	$(Q)test -z "$$($(DOCKER) ps -qa -f 'name=$(RUNAS)')" || \
 		( echo "Please remove the instance before issuing make run" 1>&2 && exit 127 )
-	$(Q)$(call E, DOCKER RUN $(RUNAS), \
+	$(Q)$(call S, DOCKER RUN $(RUNAS), \
 		$(DOCKER) run -tid --name $(RUNAS) $(IMAGE):$(TAG) > instance-id) \
-	 && $(call E, $(RUNAS) is running)
+	 && $(call S, $(RUNAS) is running)
 	@echo -e "\n\n	Use \e[1mdocker attach $(RUNAS)\e[0m to attach to the instance\n"
 
 clean-instance:
 	$(Q)test -z "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" || \
 		( echo "Please stop the instance before issuing make clean-instance" 1>&2 && exit 127 )
-	$(Q)$(call E, 'DOCKER CLEAN', ($(DOCKER) rm $(RUNAS) || echo $(RUNAS)) > instance-id)
+	$(Q)$(call S, 'DOCKER CLEAN', ($(DOCKER) rm $(RUNAS) || echo $(RUNAS)) > instance-id)
 
 start-instance:
-	$(Q)$(call E, 'DOCKER START', $(DOCKER) start $(RUNAS) > instance-id)
+	$(Q)$(call S, 'DOCKER START', $(DOCKER) start $(RUNAS) > instance-id)
 
 stop-instance:
-	$(Q)test -n "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" && $(call E, 'DOCKER STOP', $(DOCKER) stop $(RUNAS)) || true
+	$(Q)test -n "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" && $(call S, 'DOCKER STOP', $(DOCKER) stop $(RUNAS)) || true
 
 attach:
 	@echo -ne "\n\tDon't attach using make.\n\tUse \e[1mdocker attach $(RUNAS)\e[0m instead to attach to the instance\n\n" && exit 127

@@ -20,6 +20,8 @@
 #
 # 	make		-- build image from the current git branch
 # 	make run 	-- build & run image from the current git branch
+# 			   NOTE: the executed image gets deleted upon exit
+#
 # 	make latest	-- build image as latest from current git branch
 # 	make run-latest	-- build & run image as latest from current git branch
 #
@@ -88,7 +90,7 @@ build:
 	$(Q)$(DOCKER) build -t $(IMAGE):$(TAG) $(ROOTDIR)
 
 run: build
-	$(Q)$(DOCKER) run -i -t --name $(RUNAS) $(IMAGE):$(TAG)
+	$(Q)$(DOCKER) run --rm -i -t --name $(RUNAS) $(IMAGE):$(TAG)
 
 clean:
 

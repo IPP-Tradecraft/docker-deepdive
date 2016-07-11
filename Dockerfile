@@ -61,6 +61,7 @@ RUN getdeepdive.sh deepdive_from_release
 RUN getdeepdive.sh deepdive_examples_tests
 RUN getdeepdive.sh spouse_example
 
+USER root
 ADD run-postgresql.sh /usr/bin
 ADD supervisor-postgresql.conf /etc/supervisor/conf.d/
 

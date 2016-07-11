@@ -71,7 +71,17 @@ PERL=perl -w
 ifeq ($(V),)
 Q=@
 e=(echo $(1) 1>&2)
-E=([ -n "$(1)" ] && (echo -ne "	\e[1;37m[\e[32m"; echo -ne $(1); echo -e "\e[1;37m]\e[0m") 1>&2)
+E=([ -n "$(1)" ] && (							\
+	echo -ne "	\e[0;37m[\e[32m"; echo -ne $(1); 		\
+	if [ -n '$(2)' ] ; then $(if $(2),$(2),:) > /dev/null 2>&1; 	\
+		rv=$$?; if [ $$rv -eq 0 ]; then				\
+			echo -e "\e[0;37m:\e[1;34mSuccess\e[0m]";	\
+		else 							\
+			echo -e "\e[0;37m:\e[0;31m Failure\e[0m]";	\
+			exit $$rv;					\
+		fi;							\
+	else echo -e "\e[0;37m]"; fi) 1>&2)
+
 else
 Q=
 E=
@@ -102,17 +112,40 @@ PHONY+=space
 PHONY+= build
 
 build: 
-	$(Q)$(call E, DOCKER BUILD); $(DOCKER) build -t $(IMAGE):$(TAG) $(ROOTDIR) > build-log 2>&1
+	$(Q)$(call E, DOCKER BUILD, $(DOCKER) build -t $(IMAGE):$(TAG) $(ROOTDIR) > build-log 2>&1)
 
 
 PHONY+=run
 run: 
-	$(Q)$(call e); $(MAKE) run-instance; $(call e)
+	$(Q)$(call e); $(MAKE) build rm-instance run-instance; $(call e)
 
-run-instance: build
-	$(Q)$(call E, DOCKER RM); $(DOCKER) rm $(RUNAS) >/dev/null 2>&1 || true
-	$(Q)$(call E, DOCKER RUN); $(DOCKER) run -tid --name $(RUNAS) $(IMAGE):$(TAG) > instance-id && $(call E, RUNNING $(RUNAS))
-	$(Q)echo -e "\n\n	Use \e[1mdocker attach $(RUNAS)\e[0m to attach to the instance\n"
+stop:
+	$(Q)$(call e); $(MAKE) stop-instance; $(call e)
+
+start:
+	$(Q)$(call e); $(MAKE) start-instance; $(call e)
+
+run-instance:
+	$(Q)test -z "$$($(DOCKER) ps -qa -f 'name=$(RUNAS)')" || \
+		( echo "Please remove the instance before issuing make run" 1>&2 && exit 127 )
+	$(Q)$(call E, DOCKER RUN $(RUNAS), \
+		$(DOCKER) run -tid --name $(RUNAS) $(IMAGE):$(TAG)) \
+	 && $(call E, $(RUNAS) is running)
+	@echo -e "\n\n	Use \e[1mdocker attach $(RUNAS)\e[0m to attach to the instance\n"
+
+rm-instance:
+	$(Q)test -z "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" || \
+		( echo "Please stop the instance before issuing make rm-instance" 1>&2 && exit 127 )
+	$(Q)$(call E, 'DOCKER RM', $(DOCKER) rm $(RUNAS))
+
+start-instance:
+	$(Q)$(call E, 'DOCKER START', $(DOCKER) start $(RUNAS) > instance-id)
+
+stop-instance:
+	$(Q)$(call E, 'DOCKER STOP', $(DOCKER) stop $(RUNAS) > instance-id)
+
+attach:
+	@echo -ne "\n\tDon't attach using make.\n\tUse \e[1mdocker attach $(RUNAS)\e[0m instead to attach to the instance\n\n" && exit 127
 
 .deps:
 	$(Q)$(MKDIR_P) $@

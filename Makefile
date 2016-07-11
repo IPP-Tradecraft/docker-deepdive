@@ -53,6 +53,8 @@ RUNAS:=docker-deepdive-instance
 
 ####### do not edit below this #####
 
+MAKEFLAGS += -rR --no-print-directory
+ 
 DOCKER=docker
 MKDIR_P=mkdir -p
 PERL=perl -w
@@ -68,17 +70,26 @@ PERL=perl -w
 
 ifeq ($(V),)
 Q=@
+e=(echo $(1) 1>&2)
+E=([ -n "$(1)" ] && (echo -ne "	\e[1;37m[\e[32m"; echo -ne $(1); echo -e "\e[1;37m]\e[0m") 1>&2)
 else
 Q=
+E=
+e=
 endif
+
+
+PHONY=
 
 
 # Suppress entering/leaving messages
 
-.SILENT:
+PHONY += default 
 
-default:: build
+default::
+	$(Q)$(call e); $(MAKE) build; $(call e)
 
+PHONY += help
 help::
 	$(Q)$(PERL) help.pl Makefile | $${PAGER:-less -XeF --prompt "Use j/k to scroll, quits at the end"}
 
@@ -86,14 +97,22 @@ maintainer-clean:: clean
 	$(Q)$(RM) -r .deps 
 
 
+PHONY+=space
+
+PHONY+= build
+
 build: 
-	$(Q)$(DOCKER) build -t $(IMAGE):$(TAG) $(ROOTDIR)
+	$(Q)$(call E, DOCKER BUILD); $(DOCKER) build -t $(IMAGE):$(TAG) $(ROOTDIR) > build-log 2>&1
 
-run: build
-	$(Q)$(DOCKER) run --rm -i -t --name $(RUNAS) $(IMAGE):$(TAG)
 
-clean:
+PHONY+=run
+run: 
+	$(Q)$(call e); $(MAKE) run-instance; $(call e)
 
+run-instance: build
+	$(Q)$(call E, DOCKER RM); $(DOCKER) rm $(RUNAS) >/dev/null 2>&1 || true
+	$(Q)$(call E, DOCKER RUN); $(DOCKER) run -tid --name $(RUNAS) $(IMAGE):$(TAG) > instance-id && $(call E, RUNNING $(RUNAS))
+	$(Q)echo -e "\n\n	Use \e[1mdocker attach $(RUNAS)\e[0m to attach to the instance\n"
 
 .deps:
 	$(Q)$(MKDIR_P) $@
@@ -101,4 +120,4 @@ clean:
 first-time-help:
 	$(Q)test -f .deps/first-time-help || ($(MAKE) help && mkdir .deps && touch .deps/first-time-help)
 
-.PHONY: all
+.PHONY: $(PHONY)

@@ -143,7 +143,7 @@ run-instance:
 	$(Q)$(call S, DOCKER RUN $(RUNAS), \
 		$(DOCKER) run -tid --name $(RUNAS) $(IMAGE):$(TAG), instance-id) \
 	 && $(call S, $(RUNAS) is running)
-	@echo -e "\n\n	Use \e[1mdocker attach $(RUNAS)\e[0m to attach to the instance\n"
+	@echo -e "\n\n	Use \e[1mdocker exec -ti $(RUNAS) /bin/bash\e[0m to attach to the instance\n"
 
 clean-instance:
 	$(Q)test -z "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" || \

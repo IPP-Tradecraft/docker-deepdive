@@ -151,7 +151,7 @@ clean-instance:
 	$(Q)$(call S, 'DOCKER CLEAN', $(DOCKER) rm $(RUNAS) || echo $(RUNAS), instance-id )
 
 start-instance:
-	$(Q)$(call S, 'DOCKER START', $(DOCKER) start $(RUNAS), ./scripts/spin-tee.sh instance-id)
+	$(Q)$(call S, 'DOCKER START', $(DOCKER) start $(RUNAS), instance-id)
 
 stop-instance:
 	$(Q)test -n "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" && $(call S, 'DOCKER STOP', $(DOCKER) stop $(RUNAS)) || true

@@ -1,5 +1,5 @@
 FROM ubuntu:trusty
-MAINTAINER Scott Phillpott <scott@phillpott.com>
+MAINTAINER Scott Phillpott <scott@phillpott.com>, Ahmed Masud <ahmed.masud@trustifier.com>
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -yq \
 	python-matplotlib \
 	pango-graphite \
 	gnuplot-x11 \
+	postgresql   \
 	postgresql-contrib \
 	python-pip \
 	libnuma-dev
@@ -51,15 +52,18 @@ RUN useradd -c "Deep Diver,,," -m -s /bin/bash --groups sudo deepdiver && \
 
 ADD run-postgresql.sh /usr/bin
 ADD supervisor-postgresql.conf /etc/supervisor/conf.d/
+ADD fix-postgres-settings.sh /tmp/
+RUN chmod a+x /tmp/fix-postgres-settings.sh ; /tmp/fix-postgres-settings.sh
 
 USER deepdiver
 WORKDIR /home/deepdiver
 RUN echo PATH="/home/deepdiver/local/bin:$PATH" >> ~/.bashrc
 RUN id 
-RUN getdeepdive.sh postgres
-RUN getdeepdive.sh deepdive_from_release
-RUN getdeepdive.sh deepdive_examples_tests
-RUN getdeepdive.sh spouse_example
-
+# RUN USER=deepdiver getdeepdive.sh postgres
+RUN USER=deepdiver getdeepdive.sh deepdive_from_release
+RUN USER=deepdiver getdeepdive.sh deepdive_examples_tests
+RUN USER=deepdiver getdeepdive.sh spouse_example
+ 
 USER root
 ENTRYPOINT [ "/usr/bin/supervisord" ]
+

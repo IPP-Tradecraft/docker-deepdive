@@ -45,9 +45,6 @@ RUN mkdir -p /usr/local/bin && \
 	curl -fsSL git.io/getdeepdive > /usr/local/bin/getdeepdive.sh && \
 	chmod 755 /usr/local/bin/getdeepdive.sh
 
-ARG DD_PASSWORD
-ENV DD_PASSWORD=${DD_PASSWORD:-changeme}
-
 RUN sed -i -e '/^%sudo/s/ALL[ \t]*$/NOPASSWD: ALL/'  /etc/sudoers
 RUN useradd -c "Deep Diver,,," -m -s /bin/bash --groups sudo deepdiver && \
 	echo deepdiver:${DD_PASSWORD}  | chpasswd -c SHA512
@@ -64,5 +61,5 @@ RUN getdeepdive.sh deepdive_from_release
 RUN getdeepdive.sh deepdive_examples_tests
 RUN getdeepdive.sh spouse_example
 
-
+USER root
 ENTRYPOINT [ "/usr/bin/supervisord" ]

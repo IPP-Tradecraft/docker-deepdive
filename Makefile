@@ -71,9 +71,10 @@ PERL=perl -w
 ifeq ($(V),)
 Q=@
 e=(echo $(1) 1>&2)
+
 S=([ -n "$(1)" ] && (							\
 	echo -ne "	\e[0;37m[\e[32m"; echo -ne $(1); 		\
-	if [ -n '$(2)' ] ; then ($(if $(2),$(2),:)) > /dev/null 2>&1; 	\
+	if [ -n '$(2)' ] ; then $(if $(2),./scripts/spin-tee.sh -L $(if $(3), $(3), /dev/null) -- $(2), :);  \
 		rv=$$?; if [ $$rv -eq 0 ]; then				\
 			echo -e "\e[0;37m:\e[1;34m Success\e[0m]";	\
 		else 							\
@@ -109,7 +110,7 @@ default::
 
 PHONY += help
 help::
-	$(Q)$(PERL) help.pl Makefile | $${PAGER:-less -XeF --prompt "Use j/k to scroll, quits at the end"}
+	$(Q)$(PERL) scripts/help.pl Makefile | $${PAGER:-less -XeF --prompt "Use j/k to scroll, quits at the end"}
 
 maintainer-clean:: clean
 	$(Q)$(RM) -r .deps 
@@ -120,7 +121,7 @@ PHONY+=space
 PHONY+= build
 
 build: 
-	$(Q)$(call S, DOCKER BUILD, $(DOCKER) build -t $(IMAGE):$(TAG) $(ROOTDIR) > build-log 2>&1) || \
+	$(Q)$(call S, DOCKER BUILD, $(DOCKER) build -t $(IMAGE):$(TAG) $(ROOTDIR), build-log ) || \
 		$(call T, Error: docker build log, tac build-log | grep -m1 Step -B10 | tac)
 
 PHONY+=run
@@ -140,17 +141,17 @@ run-instance:
 	$(Q)test -z "$$($(DOCKER) ps -qa -f 'name=$(RUNAS)')" || \
 		( echo "Please remove the instance before issuing make run" 1>&2 && exit 127 )
 	$(Q)$(call S, DOCKER RUN $(RUNAS), \
-		$(DOCKER) run -tid --name $(RUNAS) $(IMAGE):$(TAG) > instance-id) \
+		$(DOCKER) run -tid --name $(RUNAS) $(IMAGE):$(TAG), instance-id) \
 	 && $(call S, $(RUNAS) is running)
 	@echo -e "\n\n	Use \e[1mdocker attach $(RUNAS)\e[0m to attach to the instance\n"
 
 clean-instance:
 	$(Q)test -z "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" || \
 		( echo "Please stop the instance before issuing make clean-instance" 1>&2 && exit 127 )
-	$(Q)$(call S, 'DOCKER CLEAN', ($(DOCKER) rm $(RUNAS) || echo $(RUNAS)) > instance-id)
+	$(Q)$(call S, 'DOCKER CLEAN', $(DOCKER) rm $(RUNAS) || echo $(RUNAS), instance-id )
 
 start-instance:
-	$(Q)$(call S, 'DOCKER START', $(DOCKER) start $(RUNAS) > instance-id)
+	$(Q)$(call S, 'DOCKER START', $(DOCKER) start $(RUNAS), ./scripts/spin-tee.sh instance-id)
 
 stop-instance:
 	$(Q)test -n "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" && $(call S, 'DOCKER STOP', $(DOCKER) stop $(RUNAS)) || true

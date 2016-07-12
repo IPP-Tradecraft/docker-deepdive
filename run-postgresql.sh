@@ -12,4 +12,4 @@ else
     install -d -m 2775 -o postgres -g postgres /var/run/postgresql
 fi
 
-/usr/lib/postgresql/$PG_VERSION/bin/postgres -D $PG_DATADIR -c ${PG_CONFIG}
+/usr/lib/postgresql/$PG_VERSION/bin/postgres -D $PG_DATADIR -c config_file=${PG_CONFIG}

@@ -14,11 +14,13 @@ RUN echo "Acquire::http {No-cache=True;};" > /etc/apt/apt.conf.d/no-cache
 RUN apt-get update && apt-get install -yq \
 	supervisor \
 	screen \
+	eog \
 	python \
 	build-essential \
 	make \
 	gcc \
 	libtool \
+	openssh-server \
 	python-dev \
 	python-setuptools \
 	python-numpy \
@@ -51,9 +53,11 @@ RUN useradd -c "Deep Diver,,," -m -s /bin/bash --groups sudo deepdiver && \
 	echo deepdiver:${DD_PASSWORD}  | chpasswd -c SHA512
 
 ADD run-postgresql.sh /usr/bin
-ADD supervisor-postgresql.conf /etc/supervisor/conf.d/
+ADD supervisor-postgresql.conf supervisor-sshd.conf /etc/supervisor/conf.d/
 ADD fix-postgres-settings.sh /tmp/
-RUN chmod a+x /tmp/fix-postgres-settings.sh ; /tmp/fix-postgres-settings.sh
+RUN chmod a+x /tmp/fix-postgres-settings.sh 
+RUN /tmp/fix-postgres-settings.sh
+RUN mkdir /var/run/sshd
 
 USER deepdiver
 WORKDIR /home/deepdiver

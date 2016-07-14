@@ -137,6 +137,10 @@ start:
 clean:
 	$(Q)$(call e); $(MAKE) stop-instance clean-instance; $(call e)
 
+status:
+	$(Q)INSTANCEID="$$($(DOCKER) ps -q -f 'name=$(RUNAS)')";  test -n "$${INSTANCEID}" && \
+		( echo "Instance is running as $(RUNAS) (id: $${INSTANCEID})" )  || ( echo "Instance is not running" )
+
 run-instance:
 	$(Q)test -z "$$($(DOCKER) ps -qa -f 'name=$(RUNAS)')" || \
 		( echo "Please remove the instance before issuing make run" 1>&2 && exit 127 )

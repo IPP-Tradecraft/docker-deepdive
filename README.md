@@ -1,8 +1,11 @@
+# Latest version
+
+Current stable release: v1.0.3
+
 # Introduction
 
 Deepdive analytics engine (http://deepdive.stanford.edu/)[http://deepdive.stanford.edu/]
 in a docker container.
-
 
 Usage is 
 

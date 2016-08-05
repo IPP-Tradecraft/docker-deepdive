@@ -44,17 +44,21 @@ RUN echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-s
 RUN echo debconf shared/accepted-oracle-license-v1-1 seen   true | debconf-set-selections
 RUN apt-get -yq install oracle-java8-installer
 
-RUN mkdir -p /usr/local/bin && \
-	curl -fsSL git.io/getdeepdive > /usr/local/bin/getdeepdive.sh && \
-	chmod 755 /usr/local/bin/getdeepdive.sh
-
+RUN mkdir -p /usr/local/bin && pushd /usr/local/bin			  && \
+	echo '#!/bin/bash'			  	 > getdeepdive.sh && \
+	echo export DEBIAN_FRONTEND=noninteractive 	>> getdeepdive.sh && \
+	curl -fsSL git.io/getdeepdive | sed -e '/^#!/d'	>> getdeepdive.sh && \
+	chmod a+x /usr/local/bin/getdeepdive.sh 			  && \
+	:
+	
 RUN sed -i -e '/^%sudo/s/ALL[ \t]*$/NOPASSWD: ALL/'  /etc/sudoers
 RUN useradd -c "Deep Diver,,," -m -s /bin/bash --groups sudo deepdiver && \
 	echo deepdiver:${DD_PASSWORD}  | chpasswd -c SHA512
 
-ADD run-postgresql.sh /usr/bin
-ADD supervisor-postgresql.conf supervisor-sshd.conf /etc/supervisor/conf.d/
-ADD fix-postgres-settings.sh /tmp/
+COPY run-postgresql.sh /usr/bin
+COPY supervisor-postgresql.conf supervisor-sshd.conf /etc/supervisor/conf.d/
+COPY fix-postgres-settings.sh /tmp/
+
 RUN chmod a+x /tmp/fix-postgres-settings.sh 
 RUN /tmp/fix-postgres-settings.sh
 RUN mkdir /var/run/sshd

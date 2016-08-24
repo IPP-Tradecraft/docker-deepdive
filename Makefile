@@ -39,9 +39,15 @@
 #
 # Use RUNAS to specify the instance name (defaults to docker-deepdive-instance)
 #
+# DATADIR default is ~/.docker-deepdive ... Put data in subdirectory called
+# ${DATADIR}/input, deepdive will push batch results into ${DATADIR}/output
+# 
+# Use DATADIR to specify the path of data directory (input and output will be
+# pushed in ${DATADIR}/input and ${DATADIR}/output respectively
+# 
 # For example
 #
-# 	make run RUNAS=my-deepdive-instance
+# 	make run RUNAS=my-deepdive-instance DATADIR=/var/lib/deepdive/foo
 #
 # @@end-help
 
@@ -50,6 +56,10 @@ ROOTDIR:=.
 IMAGE:=docker-deepdive
 TAG:=latest
 RUNAS:=docker-deepdive-instance
+#
+# on a production system set DATADIR to /var/lib/docker-deepdive
+#
+DATADIR:=~/.docker-deepdive
 
 ####### do not edit below this #####
 
@@ -144,8 +154,9 @@ status:
 run-instance:
 	$(Q)test -z "$$($(DOCKER) ps -qa -f 'name=$(RUNAS)')" || \
 		( echo "Please remove the instance before issuing make run" 1>&2 && exit 127 )
+	$(Q)$(call S, CREATING DATA DIR $(DATADIR), mkdir -p $(DATADIR))
 	$(Q)$(call S, DOCKER RUN $(RUNAS), \
-		$(DOCKER) run -tid --name $(RUNAS) $(IMAGE):$(TAG), instance-id) \
+		$(DOCKER) run -v $(DATADIR):/var/lib/docker-deepdive -tid --name $(RUNAS) $(IMAGE):$(TAG), instance-id) \
 	 && $(call S, $(RUNAS) is running)
 	@echo -e "\n\n	Use \e[1mdocker exec -ti $(RUNAS) /bin/bash\e[0m to attach to the instance\n"
 
@@ -161,7 +172,7 @@ stop-instance:
 	$(Q)test -n "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" && $(call S, 'DOCKER STOP', $(DOCKER) stop $(RUNAS)) || true
 
 attach:
-	@echo -ne "\n\tDon't attach using make.\n\tUse \e[1mdocker attach $(RUNAS)\e[0m instead to attach to the instance\n\n" && exit 127
+	@echo -e "\n\n	Use \e[1mdocker exec -ti $(RUNAS) /bin/bash\e[0m to attach to the instance\n"
 
 .deps:
 	$(Q)$(MKDIR_P) $@

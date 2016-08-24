@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -yq \
 	make \
 	gcc \
 	libtool \
+	pandoc \
 	openssh-server \
 	python-dev \
 	python-setuptools \
@@ -35,6 +36,8 @@ RUN apt-get update && apt-get install -yq \
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
 RUN dpkg-reconfigure dash
 
+RUN pip install pypandoc
+RUN pip install inotify
 RUN apt-get -yq install curl
 RUN apt-get -yq install bsdmainutils 
 RUN apt-get -yq install git software-properties-common python3

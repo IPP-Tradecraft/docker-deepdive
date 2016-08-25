@@ -60,6 +60,10 @@ RUNAS:=docker-deepdive-instance
 # on a production system set DATADIR to /var/lib/docker-deepdive
 #
 DATADIR:=~/.docker-deepdive
+#
+# User inside the container ... 
+#
+DEEPDIVER=deepdiver
 
 ####### do not edit below this #####
 
@@ -158,7 +162,8 @@ run-instance:
 	$(Q)$(call S, DOCKER RUN $(RUNAS), \
 		$(DOCKER) run -v $(DATADIR):/var/lib/docker-deepdive -tid --name $(RUNAS) $(IMAGE):$(TAG), instance-id) \
 	 && $(call S, $(RUNAS) is running)
-	@echo -e "\n\n	Use \e[1mdocker exec -ti $(RUNAS) /bin/bash\e[0m to attach to the instance\n"
+	$(MAKE) attach-help
+
 
 clean-instance:
 	$(Q)test -z "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" || \
@@ -171,8 +176,11 @@ start-instance:
 stop-instance:
 	$(Q)test -n "$$($(DOCKER) ps -q -f 'name=$(RUNAS)')" && $(call S, 'DOCKER STOP', $(DOCKER) stop $(RUNAS)) || true
 
-attach:
-	@echo -e "\n\n	Use \e[1mdocker exec -ti $(RUNAS) /bin/bash\e[0m to attach to the instance\n"
+attach: attach-help
+
+attach-help:
+	@echo -e "\n\n	Use \e[1mdocker exec -ti $(RUNAS) su - $(DEEPDIVER)\e[0m to attach to the deepdive processing environment.\n"
+	@echo -e "\n\n	Use \e[1mdocker exec -ti $(RUNAS) /bin/bash\e[0m to attach to the raw instance.\n"
 
 .deps:
 	$(Q)$(MKDIR_P) $@

@@ -30,3 +30,5 @@ Do:
 	`echo "postgresql://deepdiver@localhost:5432/deepdive_spouse_deepdiver" >db.url`
 
 
+
+Run command is "docker exec -ti docker-deepdive-instance su - deepdiver"

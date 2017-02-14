@@ -1,6 +1,6 @@
 # Latest version
 
-Current stable release: v1.0.3
+Current stable release: v1.0.4
 
 # Introduction
 
@@ -30,3 +30,5 @@ Do:
 	`echo "postgresql://deepdiver@localhost:5432/deepdive_spouse_deepdiver" >db.url`
 
 
+
+Run command is "docker exec -ti docker-deepdive-instance su - deepdiver"

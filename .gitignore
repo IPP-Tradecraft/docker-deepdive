@@ -2,3 +2,7 @@
 instance-id
 *.swp
 install.Ubuntu.sh
+corpus/
+*.rst
+*.doc
+*.docx

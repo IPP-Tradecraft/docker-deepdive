@@ -1,6 +1,6 @@
 # Latest version
 
-Current stable release: v1.0.3
+Current stable release: v1.0.4
 
 # Introduction
 
